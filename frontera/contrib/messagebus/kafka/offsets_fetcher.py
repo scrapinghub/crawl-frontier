@@ -22,7 +22,7 @@ class OffsetsFetcherAsync(object):
         'heartbeat_interval_ms': 3000,
         'retry_backoff_ms': 100,
         'api_version': (0, 9),
-        'metric_group_prefix': '',
+        'metric_group_prefix': ''
     }
 
     def __init__(self, **configs):
@@ -162,9 +162,9 @@ class OffsetsFetcherAsync(object):
         Returns:
             dict: TopicPartition and message offsets
         """
-        while True:
+        retries = 3
+        while retries > 0:
             offsets = {}
-            ok = True
             for future in self._send_offset_request(partitions, timestamp):
                 self._client.poll(future=future)
 
@@ -178,11 +178,14 @@ class OffsetsFetcherAsync(object):
 
                 if future.exception.invalid_metadata:
                     refresh_future = self._client.cluster.request_update()
-                    self._client.poll(future=refresh_future, sleep=True)
-                    ok = False
-                    break
-            if ok:
+                    self._client.poll(future=refresh_future)
+                    log.warning("Got exception %s and kept the loop", future.exception)
+            if offsets:
                 return offsets
+            retries -= 1
+            log.warning("Retrying the offsets fetch loop (%d retries left)", retries)
+        log.error("Unsuccessful offsets retrieval")
+        return {}
 
     def _send_offset_request(self, partitions, timestamp):
         """Fetch a single offset before the given timestamp for the partition.
@@ -201,16 +204,17 @@ class OffsetsFetcherAsync(object):
             if node_id is None:
                 log.debug("Partition %s is unknown for fetching offset,"
                           " wait for metadata refresh", partition)
-                return Future().failure(Errors.StaleMetadata(partition))
+                return [Future().failure(Errors.StaleMetadata(partition))]
             elif node_id == -1:
                 log.debug("Leader for partition %s unavailable for fetching offset,"
                           " wait for metadata refresh", partition)
-                return Future().failure(Errors.LeaderNotAvailableError(partition))
+                return [Future().failure(Errors.LeaderNotAvailableError(partition))]
             nodes_per_partitions.setdefault(node_id, []).append(partition)
 
         # Client returns a future that only fails on network issues
         # so create a separate future and attach a callback to update it
         # based on response error codes
+
         futures = []
         for node_id, partitions in six.iteritems(nodes_per_partitions):
             request = OffsetRequest[0](
@@ -219,8 +223,13 @@ class OffsetsFetcherAsync(object):
             future_request = Future()
             _f = self._client.send(node_id, request)
             _f.add_callback(self._handle_offset_response, partitions, future_request)
-            _f.add_errback(lambda e: future_request.failure(e))
+
+            def errback(e):
+                log.error("Offset request errback error %s", e)
+                future_request.failure(e)
+            _f.add_errback(errback)
             futures.append(future_request)
+
         return futures
 
     def _handle_offset_response(self, partitions, future, response):

@@ -34,13 +34,16 @@ setup(
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
+        'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
         'Topic :: Internet :: WWW/HTTP',
         'Topic :: Software Development :: Libraries :: Application Frameworks',
         'Topic :: Software Development :: Libraries :: Python Modules',
     ],
     install_requires=[
         'six>=1.8.0',
-        'w3lib>=1.15.0'
+        'w3lib>=1.15.0',
+        'cityhash>=0.1.7'
     ],
     extras_require={
         'sql': [
@@ -60,17 +63,29 @@ setup(
             'tldextract>=1.5.1',
         ],
         'hbase': [
-            'happybase>=1.0.0'
+            'happybase>=1.0.0',
+            'thriftpy2'
         ],
         'zeromq': [
             'pyzmq',
-            'msgpack-python'
+            'msgpack-python>=0.4'
         ],
         'kafka': [
-            'kafka-python>=1.0.0'
+            'kafka-python>=1.4.0'
         ],
         'distributed': [
             'Twisted'
+        ],
+        's3': [
+            'boto3'
+        ],
+        'redis': [
+            'redis>=2.10.5',
+            'hiredis>=0.2'
+        ],
+        'strategies': [
+            'beautifulsoup4',
+            'publicsuffix'
         ]
     },
     tests_require=[
@@ -79,11 +94,14 @@ setup(
         "psycopg2>=2.5.4",
         "scrapy>=0.24",
         "tldextract>=1.5.1",
+        'thriftpy2',
         "SQLAlchemy>=1.0.0",
         "cachetools",
         "mock",
         "boto>=2.42.0",
         "colorlog>=2.4.0",
-        "python-json-logger>=0.1.5"
+        "python-json-logger>=0.1.5",
+        "redis>=2.10.5",
+        "hiredis>=0.2"
     ]
 )

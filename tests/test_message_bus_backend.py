@@ -6,9 +6,9 @@ from frontera.settings import Settings
 from frontera.core.models import Request, Response
 
 
-r1 = Request('http://www.example.com/', meta={b'domain': {b'fingerprint': b'1'}})
-r2 = Request('http://www.scrapy.org/', meta={b'domain': {b'fingerprint': b'2'}})
-r3 = Request('http://www.test.com/some/page', meta={b'domain': {b'fingerprint': b'3'}})
+r1 = Request('http://www.example.com/', meta={b'domain': {b'fingerprint': b'1'}, b'fingerprint': b'abc'})
+r2 = Request('http://www.scrapy.org/', meta={b'domain': {b'fingerprint': b'2'}, b'fingerprint': b'012'})
+r3 = Request('http://www.test.com/some/page', meta={b'domain': {b'fingerprint': b'3'}, b'fingerprint': b'345'})
 
 
 class TestMessageBusBackend(unittest.TestCase):
@@ -38,18 +38,12 @@ class TestMessageBusBackend(unittest.TestCase):
         settings.SPIDER_PARTITION_ID = -1
         self.assertRaises(ValueError, self.mbb_setup, settings)
 
-    def test_add_seeds(self):
-        mbb = self.mbb_setup()
-        mbb.add_seeds([r1, r2, r3])
-        seeds = [mbb._decoder.decode(m)[1][0] for m in mbb.spider_log_producer.messages]
-        self.assertEqual(set([seed.url for seed in seeds]), set([r1.url, r2.url, r3.url]))
-
     def test_page_crawled(self):
         mbb = self.mbb_setup()
         resp = Response(r1.url, body='body', request=r1)
         mbb.page_crawled(resp)
         page = mbb._decoder.decode(mbb.spider_log_producer.messages[0])[1]
-        self.assertEqual((page.request.url, page.body), (resp.request.url, b'body'))
+        self.assertEqual((page.request.url, page.body), (resp.request.url, 'body'))
 
     def test_links_extracted(self):
         mbb = self.mbb_setup()

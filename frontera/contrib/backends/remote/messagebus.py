@@ -27,7 +27,10 @@ class MessageBusBackend(Backend):
         self._get_timeout = float(settings.get('KAFKA_GET_TIMEOUT'))
         self._logger = logging.getLogger("messagebus-backend")
         self._buffer = OverusedBuffer(self._get_next_requests,
-                                      self._logger.debug)
+                                      max_per_key=settings.get('OVERUSED_MAX_PER_KEY'),
+                                      keep_per_key=settings.get("OVERUSED_KEEP_PER_KEY"),
+                                      max_keys=settings.get('OVERUSED_MAX_KEYS'),
+                                      keep_keys=settings.get('OVERUSED_KEEP_KEYS'))
         self._logger.info("Consuming from partition id %d", self.partition_id)
 
     @classmethod
@@ -39,12 +42,10 @@ class MessageBusBackend(Backend):
 
     def frontier_stop(self):
         self.spider_log_producer.flush()
+        self.consumer.close()
 
     def add_seeds(self, seeds):
-        per_host = aggregate_per_host(seeds)
-        for host_fprint, host_links in six.iteritems(per_host):
-            self.spider_log_producer.send(host_fprint,
-                                          self._encoder.encode_add_seeds(host_links))
+        raise NotImplementedError("The seeds addition using spider log isn't allowed")
 
     def page_crawled(self, response):
         host_fprint = get_host_fprint(response)

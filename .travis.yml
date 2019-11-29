@@ -10,6 +10,7 @@ services:
   - docker
   - mysql
   - postgresql
+  - redis-server
 
 env:
   global:
@@ -26,6 +27,21 @@ matrix:
         - docker
         - mysql
         - postgresql
+        - redis-server
+    - python: 3.6
+      env: TOXENV=py36
+      services:
+        - docker
+        - mysql
+        - postgresql
+        - redis-server
+    - python: 3.7
+      env: TOXENV=py37
+      services:
+        - docker
+        - mysql
+        - postgresql
+        - redis-server
 
 install:
   - pip install -U tox wheel codecov
@@ -56,6 +72,9 @@ script: tox
 
 after_success:
   - codecov
+
+after_script:
+  - cat broker.log
 
 deploy:
   provider: pypi

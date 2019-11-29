@@ -2,7 +2,7 @@
 Message bus
 ===========
 
-Message bus ss the transport layer abstraction mechanism. Frontera provides interface and several implementations.
+Message bus is the transport layer abstraction mechanism. Frontera provides interface and several implementations.
 Only one message bus can be used in crawler at the time, and it's selected with :setting:`MESSAGE_BUS` setting.
 
 Spiders process can use
@@ -31,7 +31,7 @@ components startup to avoid message loss:
 
 #. :term:`db worker`
 #. :term:`strategy worker`
-#. :term:`spiders`
+#. :term:`spider`s
 
 Unfortunately, it's not possible to avoid message loss when stopping running crawler with unfinished crawl. We recommend
  to use Kafka message bus if your crawler application is sensitive to small message loss.
